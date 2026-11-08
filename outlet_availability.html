@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bethancourt Ballroom Outlet Availability | TAMU Datathon</title>
+  <!-- Google Fonts & Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg-dark: #0b070a;
+      --card-bg: rgba(26, 15, 22, 0.85);
+      --maroon-accent: #500000;
+      --gold: #d4af37;
+      --gold-hover: #f3e5ab;
+      --color-available: #10b981; /* Green */
+      --color-unavailable: #ef4444; /* Red */
+      --color-unpluggable: #18181b; /* Black */
+      --border-unpluggable: #3f3f46;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(80, 0, 0, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(15, 10, 14, 0.95) 0%, #050304 100%);
+      color: #f3f4f6;
+      font-family: 'Montserrat', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-bottom: 90px;
+    }
+
+    /* Header */
+    header {
+      background: rgba(15, 10, 14, 0.9);
+      border-bottom: 2px solid var(--gold);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-title i {
+      color: var(--gold);
+      font-size: 1.8rem;
+    }
+
+    .brand-title h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.4rem;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .brand-title p {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    /* Top Right Clock Section */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .admin-btn {
+      background: linear-gradient(135deg, var(--gold), #b8860b);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    }
+
+    .admin-btn:hover {
+      background: var(--gold-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+    }
+
+    .admin-btn.logged-in {
+      background: #dc2626;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
+    }
+
+    .clock-display {
+      text-align: right;
+    }
+
+    .clock-date {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .clock-time {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1.2;
+    }
+
+    .clock-updated {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+
+    .clock-updated span {
+      color: #d1d5db;
+      font-weight: 600;
+    }
+
+    /* Main Container & Grid Layout */
+    .container {
+      max-width: 1700px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+    }
+
+    .ballroom-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* Table Pair Cards */
+    .table-pair-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 10px;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+      position: relative;
+    }
+
+    .table-pair-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-3px);
+    }
+
+    .table-pair-header {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+      text-align: center;
+      width: 100%;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.3rem;
+      letter-spacing: 0.5px;
+    }
+
+    .table-half {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.4rem 0;
+    }
+
+    .table-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.4), transparent);
+      margin: 0.25rem 0;
+    }
+
+    .table-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 0.4rem;
+    }
+
+    /* 4x4 Grid representation */
+    .outlet-grid-4x4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      width: 100%;
+      max-width: 130px;
+      aspect-ratio: 1;
+      padding: 4px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .outlet-cell {
+      border-radius: 3px;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+      position: relative;
+      aspect-ratio: 1;
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .outlet-cell:hover {
+      transform: scale(1.15);
+      z-index: 2;
+    }
+
+    .outlet-cell.available {
+      background-color: var(--color-available);
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+    }
+
+    .outlet-cell.unavailable {
+      background-color: var(--color-unavailable);
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+    }
+
+    .outlet-cell.unpluggable {
+      background-color: var(--color-unpluggable);
+      border: 1px solid var(--border-unpluggable);
+      cursor: not-allowed;
+    }
+
+    .outlet-cell.unpluggable.admin-editable {
+      cursor: pointer;
+    }
+
+    .outlet-cell.unpluggable::after {
+      content: "⚡";
+      font-size: 8px;
+      color: #ef4444;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.8;
+    }
+
+    /* Fixed Bottom Left Legend */
+    .legend-box {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      background: rgba(15, 10, 14, 0.95);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .legend-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .legend-items {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: #d1d5db;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .legend-color.available { background: var(--color-available); }
+    .legend-color.unavailable { background: var(--color-unavailable); }
+    .legend-color.unpluggable { 
+      background: var(--color-unpluggable); 
+      border: 1px solid var(--border-unpluggable);
+    }
+
+    /* Admin Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #140d12;
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+      position: relative;
+    }
+
+    .modal-card h2 {
+      font-family: 'Cinzel', serif;
+      color: var(--gold);
+      margin-bottom: 1.25rem;
+      text-align: center;
+      font-size: 1.3rem;
+    }
+
+    .modal-field {
+      margin-bottom: 1rem;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 0.35rem;
+      font-weight: 600;
+    }
+
+    .modal-field input {
+      width: 100%;
+      background: #090507;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 6px;
+      padding: 0.6rem 0.8rem;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .modal-field input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+    }
+
+    .modal-error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-bottom: 1rem;
+      display: none;
+      text-align: center;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 0.6rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .modal-btn-submit {
+      background: var(--gold);
+      color: #000;
+    }
+
+    .modal-btn-submit:hover {
+      background: var(--gold-hover);
+    }
+
+    .modal-btn-cancel {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ccc;
+    }
+
+    .modal-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-title">
+      <i class="fa-solid fa-dice"></i>
+      <div>
+        <h1>Bethancourt Ballroom</h1>
+        <p>Memorial Student Center • Texas A&M University</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button class="admin-btn" id="adminBtn" onclick="handleAdminToggle()">
+        <i class="fa-solid fa-lock"></i> <span id="adminBtnText">Admin Login</span>
+      </button>
+
+      <div class="clock-display">
+        <div class="clock-date" id="clockDate">November 8</div>
+        <div class="clock-time" id="clockTime">4:40 AM</div>
+        <div class="clock-updated">Last time updated: <span id="lastUpdated">November 8 | 4:26 AM</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Grid Content -->
+  <main class="container">
+    <div class="ballroom-grid" id="ballroomGrid"></div>
+  </main>
+
+  <!-- Legend (Bottom Left) -->
+  <div class="legend-box">
+    <div class="legend-title"><i class="fa-solid fa-plug"></i> Outlet Status Legend</div>
+    <div class="legend-items">
+      <div class="legend-item">
+        <div class="legend-color available"></div>
+        <span>Available</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color unavailable"></div>
+        <span>Unavailable</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color unpluggable"></div>
+        <span>Unpluggable (Power Supply)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-card">
+      <h2><i class="fa-solid fa-shield-halved"></i> Admin Login</h2>
+      <div class="modal-error" id="modalError">Invalid Credentials! Please try again.</div>
+      <form onsubmit="submitAdminLogin(event)">
+        <div class="modal-field">
+          <label for="adminName">Name</label>
+          <input type="text" id="adminName" placeholder="Enter name..." required autocomplete="off" />
+        </div>
+        <div class="modal-field">
+          <label for="adminPassword">Password</label>
+          <input type="password" id="adminPassword" placeholder="Enter password..." required />
+        </div>
+        <div class="modal-field">
+          <label for="adminId">ID Number</label>
+          <input type="text" id="adminId" placeholder="Enter ID number..." required autocomplete="off" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-cancel" onclick="closeAdminModal()">Cancel</button>
+          <button type="submit" class="modal-btn modal-btn-submit">Authenticate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // System State
+    let isAdmin = false;
+    let outletState = {};
+
+    // Dataset initialized from Google Sheet mapping
+    // Pairs structured as [Top Table, Bottom Table]
+    const tablePairs = [
+      // Block 1
+      ["table 108", "table 109"], ["table 106", "table 107"], ["table 104", "table 105"],
+      ["table 102", "table 103"], ["table 100", "table 101"], ["table 98", "table 99"],
+      ["table 96", "table 97"],   ["table 94", "table 95"],   ["table 92", "table 93"],
+      ["table 126", "table 127"], ["table 124", "table 125"], ["table 122", "table 123"],
+      ["table 120", "table 121"], ["table 118", "table 119"], ["table 116", "table 117"],
+      ["table 114", "table 115"], ["table 112", "table 113"], ["table 110", "table 111"],
+      // Block 2
+      ["table 90", "table 91"],   ["table 88", "table 89"],   ["table 86", "table 87"],
+      ["table 84", "table 85"],   ["table 82", "table 83"],   ["table 80", "table 81"],
+      ["table 78", "table 79"],   ["table 76", "table 77"],   ["table 74", "table 75"],
+      ["table 72", "table 73"],   ["table 70", "table 71"],   ["table 148", "table 149"],
+      ["table 146", "table 147"], ["table 144", "table 145"], ["table 142", "table 143"],
+      ["table 140", "table 141"], ["table 138", "table 139"], ["table 136", "table 137"],
+      ["table 134", "table 135"], ["table 132", "table 133"], ["table 130", "table 131"],
+      ["table 128", "table 129"],
+      // Block 3
+      ["table 48", "table 47"],   ["table 50", "table 49"],   ["table 52", "table 51"],
+      ["table 54", "table 53"],   ["table 56", "table 55"],   ["table 58", "table 57"],
+      ["table 60", "table 59"],   ["table 62", "table 61"],   ["table 64", "table 63"],
+      ["table 66", "table 65"],   ["table 68", "table 67"],   ["table 170", "table 171"],
+      ["table 168", "table 169"], ["table 166", "table 167"], ["table 164", "table 165"],
+      ["table 162", "table 163"], ["table 160", "table 161"], ["table 158", "table 159"],
+      ["table 156", "table 157"], ["table 154", "table 155"], ["table 152", "table 153"],
+      ["table 150", "table 151"],
+      // Block 4
+      ["table 46", "table 45"],   ["table 44", "table 43"],   ["table 42", "table 41"],
+      ["table 40", "table 39"],   ["table 38", "table 37"],   ["table 36", "table 35"],
+      ["table 34", "table 33"],   ["table 32", "table 31"],   ["table 30", "table 29"],
+      ["table 28", "table 27"],   ["table 26", "table 25"],   ["table 24", "table 23"],
+      ["table 22", "table 21"],   ["table 20", "table 19"],   ["table 18", "table 17"],
+      ["table 16", "table 15"],   ["table 14", "table 13"],   ["table 12", "table 11"],
+      ["table 10", "table 9"],    ["table 8", "table 7"],     ["table 6", "table 5"],
+      ["table 4", "table 2"],     ["table 3", "table 1"]
+    ];
+
+    // Status map imported directly from spreadsheet data
+    const sheetInitialData = {
+      "table 108": ["available", "available"], "table 109": ["unavailable", "unavailable"],
+      "table 106": ["unavailable", "available"], "table 107": ["available", "available"],
+      "table 104": ["available", "available"], "table 105": ["available", "available"],
+      "table 102": ["available", "available"], "table 103": ["available", "available"],
+      "table 100": ["available", "available"], "table 101": ["available", "available"],
+      "table 98": ["available", "available"], "table 99": ["available", "available"],
+      "table 96": ["available", "available"], "table 97": ["available", "available"],
+      "table 94": ["unavailable", "unavailable"], "table 95": ["available", "available"],
+      "table 92": ["available", "available"], "table 93": ["available", "available"],
+      "table 126": ["available", "unavailable"], "table 127": ["available", "unavailable"],
+      "table 124": ["available", "available"], "table 125": ["available", "available"],
+      "table 122": ["available", "available"], "table 123": ["available", "available"],
+      "table 120": ["available", "available"], "table 121": ["available", "available"],
+      "table 118": ["available", "available"], "table 119": ["available", "available"],
+      "table 116": ["available", "available"], "table 117": ["available", "available"],
+      "table 114": ["available", "available"], "table 115": ["available", "available"],
+      "table 112": ["unavailable", "available"], "table 113": ["unavailable", "unavailable"],
+      "table 110": ["unavailable", "available"], "table 111": ["unavailable", "available"],
+
+      "table 90": ["unavailable", "unavailable"], "table 91": ["unavailable", "unavailable"],
+      "table 88": ["unavailable", "available"], "table 89": ["available", "available"],
+      "table 86": ["available", "available"], "table 87": ["available", "available"],
+      "table 84": ["available", "available"], "table 85": ["available", "available"],
+      "table 82": ["unavailable", "unavailable"], "table 83": ["available", "available"],
+      "table 80": ["unavailable", "available"], "table 81": ["available", "available"],
+      "table 78": ["available", "available"], "table 79": ["available", "available"],
+      "table 76": ["available", "available"], "table 77": ["available", "available"],
+      "table 74": ["available", "available"], "table 75": ["available", "unpluggable"],
+      "table 72": ["available", "unpluggable"], "table 73": ["available", "available"],
+      "table 70": ["unavailable", "available"], "table 71": ["available", "unavailable"],
+      "table 148": ["available", "available"], "table 149": ["available", "available"],
+      "table 146": ["available", "available"], "table 147": ["unpluggable", "available"],
+      "table 144": ["unpluggable", "available"], "table 145": ["available", "available"],
+      "table 142": ["available", "available"], "table 143": ["available", "available"],
+      "table 140": ["available", "available"], "table 141": ["available", "available"],
+      "table 138": ["available", "available"], "table 139": ["available", "available"],
+      "table 136": ["available", "available"], "table 137": ["available", "available"],
+      "table 134": ["available", "available"], "table 135": ["available", "available"],
+      "table 132": ["available", "available"], "table 133": ["available", "available"],
+      "table 130": ["available", "available"], "table 131": ["available", "available"],
+      "table 128": ["unavailable", "unavailable"], "table 129": ["available", "available"],
+
+      "table 48": ["available", "available"], "table 47": ["available", "available"],
+      "table 50": ["available", "available"], "table 49": ["available", "available"],
+      "table 52": ["unavailable", "unavailable"], "table 51": ["available", "unavailable"],
+      "table 54": ["available", "available"], "table 53": ["available", "available"],
+      "table 56": ["available", "available"], "table 55": ["available", "available"],
+      "table 58": ["available", "available"], "table 57": ["available", "available"],
+      "table 60": ["unavailable", "available"], "table 59": ["available", "available"],
+      "table 62": ["available", "available"], "table 61": ["available", "available"],
+      "table 64": ["unavailable", "unpluggable"], "table 63": ["available", "available"],
+      "table 66": ["available", "available"], "table 65": ["available", "unpluggable"],
+      "table 68": ["available", "available"], "table 67": ["available", "available"],
+      "table 170": ["available", "available"], "table 171": ["unavailable", "available"],
+      "table 168": ["unpluggable", "available"], "table 169": ["available", "available"],
+      "table 166": ["unpluggable", "available"], "table 167": ["available", "available"],
+      "table 164": ["available", "available"], "table 165": ["available", "available"],
+      "table 162": ["available", "available"], "table 163": ["available", "available"],
+      "table 160": ["available", "available"], "table 161": ["available", "available"],
+      "table 158": ["available", "available"], "table 159": ["available", "available"],
+      "table 156": ["available", "available"], "table 157": ["available", "available"],
+      "table 154": ["available", "available"], "table 155": ["available", "available"],
+      "table 152": ["available", "available"], "table 153": ["available", "available"],
+      "table 150": ["available", "available"], "table 151": ["available", "available"],
+
+      "table 46": ["available", "available"], "table 45": ["unavailable", "available"],
+      "table 44": ["available", "available"], "table 43": ["available", "available"],
+      "table 42": ["available", "available"], "table 41": ["available", "available"],
+      "table 40": ["available", "available"], "table 39": ["available", "available"],
+      "table 38": ["available", "available"], "table 37": ["available", "available"],
+      "table 36": ["available", "available"], "table 35": ["available", "available"],
+      "table 34": ["unavailable", "available"], "table 33": ["unavailable", "available"],
+      "table 32": ["available", "available"], "table 31": ["available", "available"],
+      "table 30": ["unavailable", "unavailable"], "table 29": ["available", "unpluggable"],
+      "table 28": ["unavailable", "available"], "table 27": ["available", "unpluggable"],
+      "table 26": ["available", "available"], "table 25": ["available", "available"],
+      "table 24": ["available", "available"], "table 23": ["unavailable", "available"],
+      "table 22": ["available", "available"], "table 21": ["unpluggable", "available"],
+      "table 20": ["unpluggable", "available"], "table 19": ["available", "available"],
+      "table 18": ["available", "available"], "table 17": ["available", "available"],
+      "table 16": ["available", "available"], "table 15": ["available", "available"],
+      "table 14": ["available", "available"], "table 13": ["available", "available"],
+      "table 12": ["available", "available"], "table 11": ["unavailable", "available"],
+      "table 10": ["unavailable", "available"], "table 9": ["unavailable", "unavailable"],
+      "table 8": ["available", "available"], "table 7": ["available", "available"],
+      "table 6": ["available", "available"], "table 5": ["available", "available"],
+      "table 4": ["available", "available"], "table 2": ["available", "available"],
+      "table 3": ["available", "available"], "table 1": ["available", "available"]
+    };
+
+    // Initialize full 16 (4x4) outlet grid state for each table
+    function initializeOutletState() {
+      const saved = localStorage.getItem('tamu_outlet_state');
+      if (saved) {
+        outletState = JSON.parse(saved);
+        return;
+      }
+
+      tablePairs.forEach(pair => {
+        pair.forEach(tableName => {
+          const sheetStatus = sheetInitialData[tableName] || ["available", "available"];
+          const grid = [];
+          // 4x4 = 16 outlets per table grid representation
+          for (let i = 0; i < 16; i++) {
+            // Assign statuses proportionally based on spreadsheet values
+            if (i < 8) {
+              grid.push(sheetStatus[0]);
+            } else {
+              grid.push(sheetStatus[1]);
+            }
+          }
+          outletState[tableName] = grid;
+        });
+      });
+      saveOutletState();
+    }
+
+    function saveOutletState() {
+      localStorage.setItem('tamu_outlet_state', JSON.stringify(outletState));
+      updateLastUpdatedTimestamp();
+    }
+
+    // Dynamic Clock Setup
+    function updateClock() {
+      const now = new Date();
+      const monthNames = ["January", "February", "March", "April", "May", "June", 
+                          "July", "August", "September", "October", "November", "December"];
+      
+      const month = monthNames[now.getMonth()];
+      const day = now.getDate();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+
+      document.getElementById('clockDate').textContent = `${month} ${day}`;
+      document.getElementById('clockTime').textContent = `${hours}:${minutes} ${ampm}`;
+    }
+
+    function updateLastUpdatedTimestamp() {
+      const now = new Date();
+      const monthNames = ["January", "February", "March", "April", "May", "June", 
+                          "July", "August", "September", "October", "November", "December"];
+      const month = monthNames[now.getMonth()];
+      const day = now.getDate();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      
+      document.getElementById('lastUpdated').textContent = `${month} ${day} | ${hours}:${minutes} ${ampm}`;
+    }
+
+    // Render Grid UI
+    function renderGrid() {
+      const container = document.getElementById('ballroomGrid');
+      container.innerHTML = '';
+
+      tablePairs.forEach(pair => {
+        const topTable = pair[0];
+        const botTable = pair[1];
+
+        const card = document.createElement('div');
+        card.className = 'table-pair-card';
+
+        card.innerHTML = `
+          <div class="table-pair-header">PAIR ${topTable.replace('table ', '')} / ${botTable.replace('table ', '')}</div>
+          
+          <div class="table-half">
+            <div class="table-label">${topTable.toUpperCase()}</div>
+            <div class="outlet-grid-4x4" id="grid-${topTable.replace(/\s+/g, '-')}"></div>
+          </div>
+
+          <div class="table-divider"></div>
+
+          <div class="table-half">
+            <div class="table-label">${botTable.toUpperCase()}</div>
+            <div class="outlet-grid-4x4" id="grid-${botTable.replace(/\s+/g, '-')}"></div>
+          </div>
+        `;
+
+        container.appendChild(card);
+
+        renderTableOutlets(topTable);
+        renderTableOutlets(botTable);
+      });
+    }
+
+    function renderTableOutlets(tableName) {
+      const gridElem = document.getElementById(`grid-${tableName.replace(/\s+/g, '-')}`);
+      if (!gridElem) return;
+      gridElem.innerHTML = '';
+
+      const outlets = outletState[tableName] || Array(16).fill('available');
+
+      outlets.forEach((status, idx) => {
+        const cell = document.createElement('div');
+        cell.className = `outlet-cell ${status}`;
+        if (isAdmin && status === 'unpluggable') {
+          cell.classList.add('admin-editable');
+        }
+
+        cell.title = `${tableName} - Outlet ${idx + 1}: ${status.toUpperCase()}`;
+        cell.onclick = () => handleOutletClick(tableName, idx);
+
+        gridElem.appendChild(cell);
+      });
+    }
+
+    // Interactive Outlet Editing Logic
+    function handleOutletClick(tableName, index) {
+      const currentStatus = outletState[tableName][index];
+
+      // Regular user cannot edit unpluggable/black outlets
+      if (currentStatus === 'unpluggable' && !isAdmin) {
+        alert('This outlet is marked as Unpluggable (Power Supply). Only an Administrator can edit it.');
+        return;
+      }
+
+      // Cycle status logic:
+      // Normal User: available <-> unavailable
+      // Admin: available -> unavailable -> unpluggable -> available
+      let nextStatus = currentStatus;
+
+      if (!isAdmin) {
+        nextStatus = currentStatus === 'available' ? 'unavailable' : 'available';
+      } else {
+        if (currentStatus === 'available') nextStatus = 'unavailable';
+        else if (currentStatus === 'unavailable') nextStatus = 'unpluggable';
+        else if (currentStatus === 'unpluggable') nextStatus = 'available';
+      }
+
+      outletState[tableName][index] = nextStatus;
+      saveOutletState();
+      renderTableOutlets(tableName);
+    }
+
+    // Admin Auth Logic
+    function handleAdminToggle() {
+      if (isAdmin) {
+        isAdmin = false;
+        document.getElementById('adminBtnText').textContent = 'Admin Login';
+        document.getElementById('adminBtn').classList.remove('logged-in');
+        renderGrid();
+      } else {
+        document.getElementById('adminModal').classList.add('active');
+        document.getElementById('modalError').style.display = 'none';
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.remove('active');
+    }
+
+    function submitAdminLogin(event) {
+      event.preventDefault();
+      const name = document.getElementById('adminName').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const id = document.getElementById('adminId').value.trim();
+
+      if (name === "Mr. Rev" && password === "Datathon" && id === "2026") {
+        isAdmin = true;
+        document.getElementById('adminBtnText').textContent = 'Admin Logout';
+        document.getElementById('adminBtn').classList.add('logged-in');
+        closeAdminModal();
+        renderGrid();
+        // Clear fields
+        document.getElementById('adminName').value = '';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminId').value = '';
+      } else {
+        document.getElementById('modalError').style.display = 'block';
+      }
+    }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeOutletState();
+      renderGrid();
+      updateClock();
+      setInterval(updateClock, 1000);
+    });
+  </script>
+</body>
+</html>
